@@ -1,47 +1,40 @@
+using Respawning;
+using Respawning.NamingRules;
+using Exiled.API.Features;
 using System;
-using EXILED;
 
 namespace Gwkhtmsat
 {
-	public class Plugin : EXILED.Plugin
+	public class Plugin : Plugin<Configs>
 	{
-		public EventHandlers EventHandlers;
+		public override string Author => "Dark7eamplar#2683";
+		public override string Name => "Guys who know how to make such a thing";
+		public override string Prefix => "gwkhtmsat";
+        public override Version RequiredExiledVersion => new Version(3, 0, 5);
 
-		public override string getName { get; } = "Gwkhtmsat";
-
-		internal const string pluginVersion = "1.0";
-
-		internal const string pluginPrefix = "gwkhtmsat";
-
-		public override void OnEnable()
+        public override void OnEnabled()
 		{
-			try
+			Exiled.Events.Handlers.Server.WaitingForPlayers += this.WaitingForPlayers;
+			base.OnEnabled();
+		}
+
+		public override void OnDisabled()
+		{
+			Exiled.Events.Handlers.Server.WaitingForPlayers -= this.WaitingForPlayers;
+			base.OnDisabled();
+		}
+
+		private void WaitingForPlayers()
+		{
+			foreach (string line in Config.Lines)
 			{
-				Configs.Reload();
-				if (Configs.disabled)
+				SyncUnit unit = new SyncUnit
 				{
-					Log.Info("Gwkhtmsat is disabled by config setting");
-					return;
-				}
-				Log.Debug("Initializing event handlers..");
-				EventHandlers = new EventHandlers(this);
-				Events.WaitingForPlayersEvent += EventHandlers.WaitingForPlayers;
-				Log.Info($"Gwkhtmsat loaded");
+					UnitName = line,
+					SpawnableTeam = (byte)SpawnableTeamType.NineTailedFox
+				};
+				RespawnManager.Singleton.NamingManager.AllUnitNames.Add(unit);
 			}
-			catch (Exception e)
-			{
-				Log.Error($"There was an error loading the plugin: {e}");
-			}
-		}
-
-		public override void OnDisable()
-		{
-			Events.WaitingForPlayersEvent -= EventHandlers.WaitingForPlayers;
-			EventHandlers = null;
-		}
-
-		public override void OnReload()
-		{
 		}
 	}
 }
